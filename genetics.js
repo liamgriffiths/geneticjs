@@ -1,145 +1,144 @@
-var RUNNING = null;
 
-var run = function () {
-  var goal = "hello world!";
+var Genetics = function (target, fitnessFn, mutationFn, populationSize,
+                         mutationChance, numParents) {
 
-  var gen = new Generation(goal, 1000, levDist);
-  gen.randomize();
-
-  var gloop = function () {
-    if(RUNNING){
-      gen.evaluate();
-      gen.drawBest();
-      gen.evolve();
-    }
-
-    window.requestAnimationFrame(gloop);
-  };
-
-  gloop();
+  this.target = target; // this is what we aim to learn
+  this.populationSize = populationSize || 1000; // number of beings in a pop
+  this.mutationChance = mutationChance || 0.2;   // percent
+  this.generation = 0; // keep track of current generation number
+  this.numParents = numParents || 10;
+  this.fitnessFn = fitnessFn || function (x, y) { return 1; };
+  this.mutationFn = mutationFn || function (dna) { return dna; };
+  this.population = [];
+  this.avgError = 0.0;
 };
 
 
-
-var Generation = function (goal, popSize, costFn) {
-  this.goal = goal;
-  this.costFn = costFn;
-  this.beings = [];
-  for(var i = 0; i < popSize; i++){
-    this.beings.push(new Being(Math.floor(Math.random() * goal.length) + 5));
+// Set up initial population
+Genetics.prototype.seed = function (seedFn) {
+  for(var i = 0; i < this.populationSize; i++){
+    var being = new Being();
+    being.dna = seedFn();
+    this.population.push(being);
   }
 };
 
-Generation.prototype.randomize = function () {
-  // randomize all the dna of all the beings in this generation
-  for(var i = 0; i < this.beings.length; i++){
-    this.beings[i].randomize();
+// Assign a fitness level to all the beings in the population, also keeps track
+// of the running error avg
+Genetics.prototype.evaluate = function () {
+  var sumErrors = 0;
+  for(var i = 0; i < this.population.length; i++){
+    this.population[i].evaluate(this.fitnessFn, this.target);
+    sumErrors += this.population[i].fitness;
   }
+  this.avgError = sumErrors / this.populationSize;
 };
 
-Generation.prototype.evaluate = function () {
-  for(var i = 0; i < this.beings.length; i++){
-    this.beings[i].cost = this.costFn(this.beings[i].dna.join(''), this.goal);
-  }
+Genetics.prototype.evolve = function () {
+  // Create a new population based on characteristics of the best in the current
+
+  // find parents population
+  var parents = this.findParents();
+
+  // do crossover
+  this.population = this.crossoverParents(parents);
+
+  // do mutation
+  this.population = this.mutateBeings(this.population);
+
+  // we are now the next generation
+  this.generation++;
 };
 
-Generation.prototype.evolve = function () {
-  // use best current beings to generate new beings array
-  // var currentBeings = this.beings;
-  var parents = this.findParents(Math.floor(this.beings.length / 20));
-
-  var goodDNA = [];
-  for(var i = 0; i < parents.length; i++){
-    goodDNA = goodDNA.concat(parents[i].dna);
-  }
-  goodDNA = goodDNA.unique();
-
-  // replace beings with beings made from set of parents dna
-  for(var j = 0; j < this.beings.length; j++){
-    this.beings[j].randomize(goodDNA.join(''));
-  }
-
-  // randomly mutate some of the beings
-  for(var k = 0; k < this.beings.length; k++){
-    // 2% chance of mutation
-    if(Math.floor(Math.random() * 100) < 20){
-      // randomly change a dna value
-      var dnaIndex = Math.floor(Math.random() * this.beings[k].dna.length);
-      this.beings[k].dna[dnaIndex] = this.beings[k].randomChar();
-    }
-  }
-
+// Returns an array of Beings that have the
+Genetics.prototype.findParents = function () {
+  var sortedByFitness = this.population.sort(Being.prototype.compare);
+  // var numParents = Math.round(this.populationSize * this.percentParents);
+  return sortedByFitness.slice(0, this.numParents);
 };
 
-Generation.prototype.findParents = function (n) {
-  this.beings.sort(Being.prototype.compareByCost);
-  var parents = [];
-  for(var i = 0; i < n; i++){
-    parents[i] = this.beings[i];
-  }
-  return parents;
+// Returns the best Being of the current generations population
+Genetics.prototype.findBest = function () {
+  return this.findParents()[0];
 };
 
-Generation.prototype.drawBest = function () {
-  var output = document.getElementById('output');
-
-  this.beings.sort(Being.prototype.compareByCost);
-  var text = document.createTextNode(this.beings[0].dna.join('') + "\n");
-  if(output.firstChild !== null){
-    output.insertBefore(text,output.firstChild);
-  }else{
-    output.appendChild(text);
-  }
-  console.log(this.beings[0].cost);
-};
-
-var Being = function (size) {
-  this.dna = new Array(size);
-  this.cost = 0;
-};
-
-Being.prototype.randomize = function (set) {
-  // randomize the dna of this being
-  for(var i = 0; i < this.dna.length; i++){
-    this.dna[i] = this.randomChar(set);
-  }
-};
-
-Being.prototype.randomChar = function (set) {
-  var possible = set || "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !.?,";
-  return possible.charAt(Math.floor(Math.random() * possible.length));
-};
-
-Being.prototype.compareByCost = function (a, b) {
-  if (a.cost < b.cost) return -1;
-  if (a.cost > b.cost) return 1;
-  return 0;
-};
-
-
-
-// window.onload = run();
-
-window.addEventListener('keydown', function (event) {
-  switch (event.keyCode) {
-    case 32: //spacebar
-      if(RUNNING === null){
-        RUNNING = true;
-        run();
-      }else{
-        RUNNING = !RUNNING;
+// Create a new Population by doing crossover with parents that is the same size
+// as the current population
+Genetics.prototype.crossoverParents = function (parents) {
+  var newPopulation = [];
+  var growPopulation = function (population) {
+    for(var j = 0; j < parents.length; j++){
+      for(var k = 0; k < parents.length; k++){
+        population.push(Being.prototype.crossover(parents[j], parents[k]));
+        if(population.length == this.populationSize) return population;
       }
-      break;
+    }
+    return population;
+  };
+  if(newPopulation.length == this.populationSize){
+    return newPopulation;
+  }else{
+    return growPopulation(newPopulation);
   }
-  event.preventDefault();
-});
+};
 
-Array.prototype.unique= function() {
-  var unique= [];
-  for (var i = 0; i < this.length; i += 1) {
-    if (unique.indexOf(this[i]) == -1) {
-      unique.push(this[i]);
+// Mutate beings according to the mutate function and mutation chance
+Genetics.prototype.mutateBeings = function (beings) {
+  for(var i = 0; i < beings.length; i++){
+    if(Math.random() * 100 < this.mutationChance){
+      beings[i].mutate(this.mutationFn);
     }
   }
-  return unique;
+  return beings;
+};
+
+
+// A being is a member of the population
+var Being = function () {
+  this.dna = []; // features of the being
+  this.fitness = 0;  // this is a measure of how good this being is compared to
+                     // the target. the lower it is the more fit it is
+};
+
+// Take features from both parents to create a new being
+// Returns a new Being
+Being.prototype.crossover = function (parentA, parentB) {
+  var being = new Being();
+  var newLength = Math.round((parentA.dna.length + parentB.dna.length) / 2);
+
+  for(var i = 0; i < newLength; i++){
+    if(parentA.dna[i] !== undefined && parentB.dna[i] !== undefined){
+      // do a coin flip to decide which parent DNA to use
+      if(Math.random() * 1 < 0.5){
+        being.dna.push(parentA.dna[i]);
+      }else{
+        being.dna.push(parentB.dna[i]);
+      }
+    }else{
+      // when the length of the new DNA is less than length of A || B use a
+      // random dna item from both A && B
+      var combinedDNA = parentA.dna.concat(parentB.dna);
+      var randDNA = combinedDNA[Math.round(Math.random() * combinedDNA.length - 1)];
+      being.dna.push(randDNA);
+    }
+  }
+
+  return being;
+};
+
+// Function to determine the fitness of this being
+Being.prototype.evaluate = function (fitnessFn, target) {
+  this.fitness = fitnessFn(this.dna, target);
+};
+
+// Function to mutate this being according the provided function
+Being.prototype.mutate = function (mutationFn) {
+  this.dna = mutationFn(this.dna);
+};
+
+// Compare function to sort by fitness level, used with Array.sort()
+Being.prototype.compare = function (a, b) {
+  if (a.fitness < b.fitness) return -1;
+  if (a.fitness > b.fitness) return 1;
+  return 0;
 };
