@@ -37,7 +37,9 @@ $(function() {
   };
 
   var draw = function () {
-    console.log(geneticDemo.findBest().dna.join(''), geneticDemo.avgError);
+    $('#chart').html("<p>Avg. Error: " + geneticDemo.avgError + "</p>" +
+                     "<p>Generation: " + geneticDemo.generation + "</p>");
+    $('#output').prepend(geneticDemo.findBest().dna.join('') + "\n");
   };
 
   var update = function () {
