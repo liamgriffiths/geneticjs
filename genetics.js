@@ -3,7 +3,7 @@ var Genetics = function (target, fitnessFn, mutationFn, populationSize,
                          mutationChance, numParents) {
 
   this.target = target; // this is what we aim to learn
-  this.populationSize = populationSize || 1000; // number of beings in a pop
+  this.populationSize = populationSize || 3000; // number of beings in a pop
   this.mutationChance = mutationChance || 0.2;   // percent
   this.generation = 0; // keep track of current generation number
   this.numParents = numParents || 10;
@@ -34,16 +34,15 @@ Genetics.prototype.evaluate = function () {
   this.avgError = sumErrors / this.populationSize;
 };
 
+// Create a new population based on characteristics of the best in the current
 Genetics.prototype.evolve = function () {
-  // Create a new population based on characteristics of the best in the current
-
   // find parents population
   var parents = this.findParents();
 
-  // do crossover
+  // do crossover (create children using parents' features)
   this.population = this.crossoverParents(parents);
 
-  // do mutation
+  // do mutation (randomly change some children's features)
   this.population = this.mutateBeings(this.population);
 
   // we are now the next generation
