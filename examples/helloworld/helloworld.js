@@ -36,8 +36,8 @@ $(function() {
   };
 
   var draw = function () {
-    $('#chart').html("<p>Avg. Error: " + geneticDemo.avgError + "</p>" +
-                     "<p>Generation: " + geneticDemo.generation + "</p>");
+    // $('#chart').html("<p>Avg. Error: " + geneticDemo.avgError + "</p>" +
+    //                  "<p>Generation: " + geneticDemo.generation + "</p>");
     $('#output').prepend(geneticDemo.findBest().dna.join('') + "\n");
   };
 

@@ -1,6 +1,6 @@
 # genetic.js
 
-This is a small library to use genetic algorithms within your program.
+This is a small library to explore using genetic algorithms. More to come soon!
 
 ## Usage
 
