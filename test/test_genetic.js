@@ -111,10 +111,53 @@ describe('Genetic', function(){
   });
 
   describe('#mutateBeings()', function(){
-
+    it("should mutate all if the chance is 100%", function(){
+      genetic.seed(seedFn);
+      genetic.evaluate();
+      genetic.mutationChance = 1.0;
+      var mutatedPopulation = genetic.mutateBeings(genetic.population);
+      for(var i = 0; i < mutatedPopulation.length; i++){
+        assert.equal(['mutated'].toString(), mutatedPopulation[i].dna.toString());
+      }
+    });
   });
 
   describe('#evolve()', function(){
+    it("should replace the previous populaton with a new one", function(){
+      genetic.seed(seedFn);
+      genetic.evaluate();
+      var currentPopulation = genetic.population;
+      genetic.evolve();
+
+      // compare the old DNAs with new ones
+      var oldDNA = [];
+      for(var i = 0; i < currentPopulation.length; i++){
+        oldDNA.push(currentPopulation[i].dna.toString());
+      }
+
+      var newDNA = [];
+      for(var j = 0; j < genetic.population.length; j++){
+        newDNA.push(genetic.population[j].toString());
+      }
+      assert.notEqual(oldDNA.join(''), newDNA.join(''));
+    });
+
+    it("should increment the generation count", function(){
+      var oldCount = genetic.generation;
+      genetic.seed(seedFn);
+      genetic.evaluate();
+      var currentPopulation = genetic.population;
+      genetic.evolve();
+      assert.equal(oldCount + 1, genetic.generation);
+    });
+
+    it("should evolve a population that is the same size as the previous one", function(){
+      genetic.seed(seedFn);
+      genetic.evaluate();
+      var currentPopulation = genetic.population;
+      genetic.evolve();
+      assert.equal(currentPopulation.length, genetic.population.length);
+    });
   });
 });
 
