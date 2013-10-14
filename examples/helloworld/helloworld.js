@@ -17,14 +17,13 @@ var mutationFn = function (dna) {
   return dna;
 };
 
-var geneticDemo = new Genetics(target, fitnessFn, mutationFn);
+var geneticDemo = new Genetic(target, fitnessFn, mutationFn);
 
 $(function() {
   var setup = function () {
     // Create a population where each being in the population's DNA is produced
     // initially by this function
     geneticDemo.seed(function(){
-      // var randomDNAsize = Math.floor(Math.random() * target.length);
       var dnaSize = target.length;
       var randomDNA = [];
       for(var i = 0; i < dnaSize; i++){
