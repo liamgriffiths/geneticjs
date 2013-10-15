@@ -10,26 +10,53 @@
 
     <style>
       body {
-        margin: 0;
+        margin: 20;
         padding: 0;
-      }
-      #chart {
-        border: 1px solid red;
-        width: 100%;
-        height: 100px;
         font-family: monospace;
       }
       #output {
-        border: 1px solid blue;
+        border: 1px solid #eee;
         height: 500px;
         width: 800px;
-        overflow: hidden;
+        overflow: scroll;
+        float: left;
       }
+      #controls {
+        float: left;
+        padding: 50px;
+        font-size: 20px;
+      }
+      #controls input { font-size: 20px; }
+      #controls button { font-size: 20px; }
+      #controls label { display: block; }
+      .clear { clear: both; }
     </style>
 
   </head>
   <body>
-  <canvas id="chart"></canvas>
-  <pre id="output"></pre>
+    <pre id="output"></pre>
+    <form id="controls" onsubmit="return false;">
+      <table>
+        <tr>
+          <td>Target</td>
+          <td><input name="target" value="The quick brown fox jumps over the lazy dog"></td>
+        </tr>
+        <tr>
+          <td>Population Size</td>
+          <td><input name="populationSize" value="2000"></td>
+        </tr>
+        <tr>
+          <td>Chance of Mutation</td>
+          <td><input name="mutationChance" value="0.2"></td>
+        </tr>
+        <tr>
+          <td>Number of Parents</td>
+          <td><input name="numParents" value="10"></td>
+        </tr>
+      </table>
+      <button id="startButton">Start</button>
+      <button id="stopButton">Stop</button>
+    </form>
+    <div class="clear"></div>
   </body>
 </html>

@@ -1,26 +1,28 @@
+
 var RUNNING = false;
-var target = "hello world my name is liam!";
+var target = "The quick brown fox jumps over the lazy dog";
+var populationSize = 2000;
+var mutationChance = 0.2;
+var numParents = 10;
+
 var fitnessFn = function (beingDNA, targetDNA) {
   // convert beingDNA to a string to compare with the target which is a string
   // in this example
   var beingDNAString = beingDNA.join('');
   return levDist(beingDNAString, targetDNA);
 };
+
 var mutationFn = function (dna) {
-  // randomly mutate different letters in the DNA array to a random char a
-  // random number of times between 1 and 4
   var possible ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !.?,";
-  // var timesToMutate = Math.round(Math.random() * 3) + 1;
-  // for(var times = 0; times < timesToMutate; times++){ }
   var dnaToMutate = Math.floor(Math.random() * dna.length);
   dna[dnaToMutate] = possible.charAt(Math.floor(Math.random() * possible.length));
   return dna;
 };
 
-var geneticDemo = new Genetic(target, fitnessFn, mutationFn);
+var geneticDemo;
 
 $(function() {
-  var setup = function () {
+  function setup() {
     // Create a population where each being in the population's DNA is produced
     // initially by this function
     geneticDemo.seed(function(){
@@ -33,32 +35,47 @@ $(function() {
       return randomDNA;
     });
     geneticDemo.evaluate();
-  };
+  }
 
-  var draw = function () {
-    // $('#chart').html("<p>Avg. Error: " + geneticDemo.avgError + "</p>" +
-    //                  "<p>Generation: " + geneticDemo.generation + "</p>");
+  function draw() {
     $('#output').prepend(geneticDemo.findBest().dna.join('') + "\n");
-  };
+  }
 
-  var update = function () {
+  function update() {
     geneticDemo.evolve();
     geneticDemo.evaluate();
-  };
+  }
 
-  var main = function () {
+  function main() {
     if(RUNNING){
       draw();
       update();
+      window.requestAnimationFrame(main);
     }
-    window.requestAnimationFrame(main);
-  };
+  }
 
-  window.addEventListener('keydown', function (event) {
-    if(event.keyCode == 32) RUNNING = !RUNNING; // spacebar to pause
-    event.preventDefault();
+  $('#startButton').on('click', function (e) {
+    var form = $('#controls').serializeArray();
+    for(var i = 0; i < form.length; i++){
+      if(form[i].name == 'target') target = form[i].value;
+      if(form[i].name == 'populationSize') populationSize = form[i].value;
+      if(form[i].name == 'mutationChance') mutationChance = form[i].value;
+      if(form[i].name == 'numParents') numParents = form[i].value;
+    }
+    RUNNING = true;
+    geneticDemo = new Genetic(target,
+                              fitnessFn,
+                              mutationFn,
+                              populationSize,
+                              mutationChance,
+                              numParents);
+    setup();
+    main();
   });
 
-  setup();
-  main();
+  $('#stopButton').on('click', function (e) {
+    RUNNING = false;
+  });
+
+
 });
