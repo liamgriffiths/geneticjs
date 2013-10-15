@@ -38,7 +38,8 @@ $(function() {
   }
 
   function draw() {
-    $('#output').prepend(geneticDemo.findBest().dna.join('') + "\n");
+    var parent = geneticDemo.selectParents()[0];
+    $('#output').prepend(parent.dna.join('') + "\n");
   }
 
   function update() {
