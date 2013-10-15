@@ -38,7 +38,7 @@ $(function() {
   }
 
   function draw() {
-    var parent = geneticDemo.selectParents()[0];
+    var parent = geneticDemo.selectionFn()[0];
     $('#output').prepend(parent.dna.join('') + "\n");
   }
 
@@ -64,12 +64,14 @@ $(function() {
       if(form[i].name == 'numParents') numParents = form[i].value;
     }
     RUNNING = true;
-    geneticDemo = new Genetic(target,
-                              fitnessFn,
-                              mutationFn,
-                              populationSize,
-                              mutationChance,
-                              numParents);
+    geneticDemo = new Genetic({
+      target: target,
+      fitnessFn: fitnessFn,
+      mutationFn: mutationFn,
+      populationSize: populationSize,
+      mutationChance: mutationChance,
+      selectionFn: Genetic.prototype.selectionFns.elitist
+    });
     setup();
     main();
   });
