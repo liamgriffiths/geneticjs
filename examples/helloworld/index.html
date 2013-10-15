@@ -21,6 +21,11 @@
         overflow: scroll;
         float: left;
       }
+      #progress {
+        border: 1px solid #eee;
+        height:100px;
+        padding: 20px;
+      }
       #controls {
         float: left;
         padding: 50px;
@@ -50,14 +55,14 @@
           <td><input name="mutationChance" value="0.2"></td>
         </tr>
         <tr>
-          <td>Number of Parents</td>
-          <td><input name="numParents" value="10"></td>
+          <td></td>
+          <td>
+            <button id="startButton">Start</button>
+            <button id="stopButton">Stop</button>
+          </td>
         </tr>
       </table>
-      <p>
-        <button id="startButton">Start</button>
-        <button id="stopButton">Stop</button>
-      </p>
+      <pre id="progress"></pre>
     </form>
     <div class="clear"></div>
   </body>

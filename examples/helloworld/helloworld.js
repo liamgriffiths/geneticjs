@@ -25,27 +25,19 @@ var mutationFn = function (dna) {
   return dna;
 };
 
-var geneticDemo;
 
 $(function() {
   function setup() {
-    // Create a population where each being in the population's DNA is produced
-    // initially by this function
-    geneticDemo.seed(function(){
-      var dnaSize = target.length;
-      var randomDNA = [];
-      for(var i = 0; i < dnaSize; i++){
-        var possible ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !.?,";
-        randomDNA.push(possible.charAt(Math.floor(Math.random() * possible.length)));
-      }
-      return randomDNA;
-    });
+    geneticDemo.seed(seedFn);
     geneticDemo.evaluate();
   }
 
   function draw() {
     var parent = geneticDemo.selectionFn()[0];
     $('#output').prepend(parent.dna.join('') + "\n");
+    $('#progress').text("Generation:   " + geneticDemo.generation + "\n" +
+                        "Error rate:   " + geneticDemo.avgError + "\n" +
+                        "Running time: " + (((new Date()).getTime() - timeStart) / 1000));
   }
 
   function update() {
@@ -61,15 +53,19 @@ $(function() {
     }
   }
 
+  // User interface
   $('#startButton').on('click', function (e) {
     var form = $('#controls').serializeArray();
     for(var i = 0; i < form.length; i++){
       if(form[i].name == 'target') target = form[i].value;
       if(form[i].name == 'populationSize') populationSize = form[i].value;
       if(form[i].name == 'mutationChance') mutationChance = form[i].value;
-      if(form[i].name == 'numParents') numParents = form[i].value;
     }
+
     RUNNING = true;
+    timeStart = (new Date().getTime());
+    console.log(timeStart);
+
     geneticDemo = new Genetic({
       target: target,
       fitnessFn: fitnessFn,
@@ -82,9 +78,5 @@ $(function() {
     main();
   });
 
-  $('#stopButton').on('click', function (e) {
-    RUNNING = false;
-  });
-
-
+  $('#stopButton').on('click', function (e) { RUNNING = false; });
 });
