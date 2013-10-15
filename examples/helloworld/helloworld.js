@@ -1,9 +1,15 @@
-
 var RUNNING = false;
-var target = "The quick brown fox jumps over the lazy dog";
-var populationSize = 2000;
-var mutationChance = 0.2;
-var numParents = 10;
+var geneticDemo, target, populationSize, mutationChance, numParents, timeStart;
+
+var seedFn = function () {
+  var dnaSize = target.length;
+  var randomDNA = [];
+  for(var i = 0; i < dnaSize; i++){
+    var possible ="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !.?,";
+    randomDNA.push(possible.charAt(Math.floor(Math.random() * possible.length)));
+  }
+  return randomDNA;
+};
 
 var fitnessFn = function (beingDNA, targetDNA) {
   // convert beingDNA to a string to compare with the target which is a string

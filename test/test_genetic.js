@@ -98,18 +98,6 @@ describe('Genetic', function(){
     });
   });
 
-  describe('#findBest()', function(){ 
-    it("should find the best candidate", function(){
-      genetic.seed(seedFn);
-      genetic.evaluate();
-      // set first one to be the best one
-      var shouldBeBest = genetic.population[0];
-      shouldBeBest.fitness = 1;
-      var best = genetic.findBest();
-      assert.equal(shouldBeBest.dna.toString(), best.dna.toString());
-    });
-  });
-
   describe('#mutateBeings()', function(){
     it("should mutate all if the chance is 100%", function(){
       genetic.seed(seedFn);
