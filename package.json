@@ -1,0 +1,27 @@
+{
+  "name": "geneticjs",
+  "version": "0.0.1",
+  "description": "A simple module for using Genetic Algorithms",
+  "main": "index",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liamgriffiths/geneticjs.git"
+  },
+  "keywords": [
+    "genetic",
+    "algorithm",
+    "machine",
+    "learning"
+  ],
+  "author": "Liam Griffiths",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/liamgriffiths/geneticjs/issues"
+  }
+}
