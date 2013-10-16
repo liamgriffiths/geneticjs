@@ -12,10 +12,10 @@ var seedFn = function () {
 };
 
 var fitnessFn = function (being, target) {
-  // convert beingDNA to a string to compare with the target which is a string
+  // convert dna to a string to compare with the target which is a string
   // in this example
   var beingDNASring = being.dna.join('');
-  return levDist(beingDNAString, target);
+  return levDist(beingDNASring, target);
 };
 
 var mutationFn = function (dna) {
