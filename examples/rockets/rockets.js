@@ -5,45 +5,44 @@ var cycles;
 var currentCycle = 0;
 
 // modify 'Being' object to add some Rocket specific properties
-Being.prototype.position = {x: 0, y: 0};
-Being.prototype.velocity = 0.2;
+Being.prototype.position = {x: 0, y: 0}; // set starting position
+Being.prototype.velocity = 0.01; // set velocity
 Being.prototype.color = Math.floor(Math.random() * 155) + 100;
 Being.prototype.live = true;
+Being.prototype.age = 0;
 Being.prototype.update = function () {
-  var frames = {
-    0: function(pos, amount){ pos.x += amount; return pos; },
-    1: function(pos, amount){ pos.x -= amount; return pos; },
-    2: function(pos, amount){ pos.y += amount; return pos; },
-    3: function(pos, amount){ pos.y -= amount; return pos; }
-  };
-  var x = this.position.x;
-  var y = this.position.y;
-  if(x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height){
-    var power = this.dna[currentCycle];
-    var velocity = this.velocity;
-    var newPostion = frames[(currentCycle) % 4]({x: x, y: y}, power * velocity);
-    this.position = newPostion;
-  }else{
-    this.live = false;
+  if(this.live){
+    var direction = this.dna[currentCycle];
+    // apply direction vector
+    this.position = {x: this.position.x + direction.x,
+                     y: this.position.y + direction.y};
+    // apply velocity vector
+    this.position = {x: this.position.x + this.velocity * this.age,
+                     y: this.position.y + this.velocity * this.age};
   }
+  this.age++;
 };
 Being.prototype.draw = function () {
   context.fillStyle = "rgba(0, "+this.color+", 200, 0.5)";
   context.fillRect(this.position.x, this.position.y, 5, 5);
 };
 
-// dna is comprised on random floats to represent power of each frame of propulsion
+// dna is comprised on random {x, y} vectors to represent the direction
 var seedFn = function () {
   var randomDNA = [];
   for(var i = 0; i < cycles; i++){
-    randomDNA.push(Math.floor(Math.random() * 20));
+    randomDNA.push({x: Math.round((Math.random() * 2) - 1),
+                    y: Math.round((Math.random() * 2) - 1)});
   }
   return randomDNA;
 };
 
-var fitnessFn = function (being, target) {
-  return Math.pow((1 / Math.abs(target.x - being.position.x) +
-                   Math.abs(target.y - being.position.y)), 2);
+var fitnessFn = function (rocket, target) {
+  var xd = Math.abs(target.x - rocket.position.x);
+  var yd = Math.abs(target.y - rocket.position.y);
+  console.log(rocket.position.x, rocket.position.y);
+  console.log(xd, yd);
+  return xd + yd;
 };
 
 var mutationFn = function (dna) {
