@@ -11,11 +11,11 @@ var seedFn = function () {
   return randomDNA;
 };
 
-var fitnessFn = function (beingDNA, targetDNA) {
+var fitnessFn = function (being, target) {
   // convert beingDNA to a string to compare with the target which is a string
   // in this example
-  var beingDNAString = beingDNA.join('');
-  return levDist(beingDNAString, targetDNA);
+  var beingDNASring = being.dna.join('');
+  return levDist(beingDNAString, target);
 };
 
 var mutationFn = function (dna) {
