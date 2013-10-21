@@ -6,12 +6,14 @@ var currentCycle = 0;
 
 // modify 'Being' object to add some Rocket specific properties
 Being.prototype.position = {x: 0, y: 0}; // set starting position
-Being.prototype.velocity = 0.01; // set velocity
+Being.prototype.velocity = 0.007; // set velocity
 Being.prototype.color = Math.floor(Math.random() * 155) + 100;
 Being.prototype.live = true;
+Being.prototype.finished = false;
 Being.prototype.age = 0;
+Being.prototype.size = 5;
 Being.prototype.update = function () {
-  if(this.live){
+  if(this.live && this.finished === false){
     var direction = this.dna[currentCycle];
     // apply direction vector
     this.position = {x: this.position.x + direction.x,
@@ -19,47 +21,65 @@ Being.prototype.update = function () {
     // apply velocity vector
     this.position = {x: this.position.x + this.velocity * this.age,
                      y: this.position.y + this.velocity * this.age};
+
+
+    if(checkCollision(this, target)) this.finished = true;
   }
   this.age++;
 };
 Being.prototype.draw = function () {
   context.fillStyle = "rgba(0, "+this.color+", 200, 0.5)";
-  context.fillRect(this.position.x, this.position.y, 5, 5);
+  context.fillRect(this.position.x, this.position.y, this.size, this.size);
 };
 
 // dna is comprised on random {x, y} vectors to represent the direction
 var seedFn = function () {
   var randomDNA = [];
   for(var i = 0; i < cycles; i++){
-    randomDNA.push({x: Math.round((Math.random() * 2) - 1),
-                    y: Math.round((Math.random() * 2) - 1)});
+    var randX = Math.round((Math.random() * 2) - 1);
+    var randY = Math.round((Math.random() * 2) - 1);
+    randomDNA.push({x: randX, y: randY});
   }
   return randomDNA;
 };
 
 var fitnessFn = function (rocket, target) {
-  var xd = Math.abs(target.x - rocket.position.x);
-  var yd = Math.abs(target.y - rocket.position.y);
-  console.log(rocket.position.x, rocket.position.y);
-  console.log(xd, yd);
-  return xd + yd;
+  var dist = Math.abs(target.x - rocket.position.x) + Math.abs(target.y - rocket.position.y);
+  return Math.sqrt(dist);
 };
 
 var mutationFn = function (dna) {
   var dnaToMutate = Math.floor(Math.random() * dna.length);
-  dna[dnaToMutate] = Math.floor(Math.random() * 20);
+  dna[dnaToMutate] = {x: Math.round((Math.random() * 2) - 1),
+                      y: Math.round((Math.random() * 2) - 1)};
   return dna;
 };
 
-var clearCanvas = function () {
+function clearCanvas () {
   canvas.width = canvas.width;
-};
+}
+
+function checkCollision (a, b) {
+  // needs some work
+  var x = a.position.x;
+  var y = a.position.y;
+
+  if(x > b.x && x < b.x + b.size &&
+     y > b.y && y < b.y + b.size){
+       return true;
+  }
+  return false;
+}
 
 $(function() {
   canvas = document.getElementById('output');
   context = canvas.getContext('2d');
+  // set target and origin to random spots on map
   target = {x: Math.floor(Math.random() * canvas.width),
-            y: Math.floor(Math.random() * canvas.height)};
+            y: Math.floor(Math.random() * canvas.height),
+            size: 10};
+  Being.prototype.position = {x: Math.floor(Math.random() * canvas.width),
+                              y: Math.floor(Math.random() * canvas.height)};
   drawTarget();
 
   function setup() {
@@ -75,7 +95,7 @@ $(function() {
     drawTarget();
 
     $('#progress').text("Generation:    " + geneticDemo.generation + "\n" +
-                        "Error rate:    " + geneticDemo.avgError + "\n" +
+                        "Error rate:    " + (geneticDemo.avgError/100) + "\n" +
                         "Running time:  " + (((new Date()).getTime() - timeStart) / 1000) + "\n" +
                         "Current cycle: " + currentCycle);
   }
@@ -107,7 +127,7 @@ $(function() {
 
   function drawTarget() {
     context.fillStyle = "rgba(255, 0, 0, 0.8)";
-    context.fillRect(target.x, target.y, 10, 10);
+    context.fillRect(target.x, target.y, target.size, target.size);
   }
 
   // User interface
