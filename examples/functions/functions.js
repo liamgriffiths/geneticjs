@@ -7,19 +7,21 @@ var util = require('util');
 // test for how many functions
 
 
-var target = {input: 1, output: 10};
+var target = {input: 1, output: 42};
 
 var functions = [
+  function identity(n){ return n; },
   function addone(n){ return n + 1; },
   function minusone(n){ return n - 1; },
   function square(n){ return n * n; },
+  function cube(n){ return n * n * n; },
   function multten(n){ return n * 10; },
-  function double(n){ return n * 2; }
+  function multtwo(n){ return n * 2; }
 ];
 
 var seedFn = function(){
   var dna = [];
-  for(var i = 0; i < 21; i++){
+  for(var i = 0; i < 50; i++){
     var randFn = functions[Math.floor(Math.random() * functions.length)];
     dna.push(randFn);
   }
@@ -28,7 +30,18 @@ var seedFn = function(){
 
 var fitnessFn = function (being, target) {
   var result = evaluateFunctions(target.input, being.dna);
-  return Math.abs(target.output - result);
+  // use the amount of identity functions in the dna as a measure of how fit
+  // this being is - in other words, the more identities the less number of
+  // steps this being must take to reach the result
+  var identityCount = 0;
+  for(var i = 0; i < being.dna.length; i++){
+    if(being.dna[i].name == 'identity') identityCount++;
+  }
+  if(target.output !== result){
+    return Math.abs(target.output - result) * (being.dna.length - identityCount);
+  }else{
+    return being.dna.length - identityCount;
+  }
 };
 
 var evaluateFunctions = function (input, fns) {
@@ -71,15 +84,22 @@ var draw = function () {
 };
 
 var main = function (n) {
-  if(n < 200){
+  if(n < 1000){
+
     update();
     draw();
     main(n + 1);
   }else{
     var best = genetic.selectionFn()[0];
-    console.log("done");
-    console.log(evaluateFunctions(target.input, best.dna));
-    console.log(util.inspect(best.dna, false, 3));
+    console.log("done!");
+
+    var fdna = best.dna.filter(function(fn){ return fn.name !== 'identity'; });
+    var actual = evaluateFunctions(target.input, best.dna);
+    console.log("fn(",target.input,  ",", target.output, ") =", actual,
+                "(in",fdna.length,"steps)");
+
+    // filter out identity functions in output
+    console.log(util.inspect(fdna, false, 3));
   }
 };
 

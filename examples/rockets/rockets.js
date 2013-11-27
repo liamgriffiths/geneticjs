@@ -6,7 +6,7 @@ var currentCycle = 0;
 
 // modify 'Being' object to add some Rocket specific properties
 Being.prototype.position = {x: 0, y: 0}; // set starting position
-Being.prototype.velocity = 0.007; // set velocity
+Being.prototype.velocity = 0.5; // set velocity
 Being.prototype.color = Math.floor(Math.random() * 155) + 100;
 Being.prototype.live = true;
 Being.prototype.finished = false;
@@ -16,11 +16,11 @@ Being.prototype.update = function () {
   if(this.live && this.finished === false){
     var direction = this.dna[currentCycle];
     // apply direction vector
-    this.position = {x: this.position.x + direction.x,
-                     y: this.position.y + direction.y};
+    this.position = {x: this.position.x + direction.x * this.velocity,
+                     y: this.position.y + direction.y * this.velocity};
     // apply velocity vector
-    this.position = {x: this.position.x + this.velocity * this.age,
-                     y: this.position.y + this.velocity * this.age};
+    // this.position = {x: this.position.x * this.velocity,
+    //                  y: this.position.y * this.velocity};
 
 
     if(checkCollision(this, target)) this.finished = true;
@@ -36,7 +36,7 @@ Being.prototype.draw = function () {
 var seedFn = function () {
   var randomDNA = [];
   for(var i = 0; i < cycles; i++){
-    var randX = Math.round((Math.random() * 2) - 1);
+    var randX = Math.floor((Math.random() * 2) - 1);
     var randY = Math.round((Math.random() * 2) - 1);
     randomDNA.push({x: randX, y: randY});
   }

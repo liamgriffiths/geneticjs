@@ -1,0 +1,52 @@
+<html>
+  <head>
+
+    <script type='text/javascript' src='../../lib/genetic.js'></script>
+    <!-- <script type='text/javascript' src='./mona.js'></script> -->
+
+    <style>
+      body {
+        margin: 20;
+        padding: 0;
+        font-family: monospace;
+      }
+    </style>
+
+    <script>
+ if(navigator.webkitGetUserMedia!=null) { 
+    var options = { 
+        video:true, 
+        audio:true 
+    }; 
+     
+    //request webcam access 
+    navigator.webkitGetUserMedia(options, 
+        function(stream) { 
+            //get the video tag 
+            var video = document.querySelector('video'); 
+            //turn the stream into a magic URL 
+            video.src = window.webkitURL.createObjectURL(stream); 
+        }, 
+        function(e) { 
+            console.log("error happened"); 
+        } 
+    ); 
+} 
+
+
+
+document.getElementById('snapshot').onclick = function() {
+  var video = document.querySelector('video');
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video,0,0);
+}
+    </script>
+
+  </head>
+  <body>
+ <video autoplay></video> 
+ <form><input type='button' id='snapshot' value="snapshot"/></form> 
+    <canvas id="canvas">
+  </body>
+</html>
