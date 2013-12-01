@@ -22,12 +22,13 @@ describe('Genetic', function(){
 
   beforeEach(function(){
     // create a instance of the GA before each test
-    genetic = new Genetic(target,
-                          fitnessFn,
-                          mutationFn,
-                          populationSize,
-                          mutationChance,
-                          numParents);
+    genetic = new Genetic({
+      target: target,
+      fitnessFn: fitnessFn,
+      mutationFn: mutationFn,
+      populationSize: populationSize,
+      mutationChance: mutationChance
+    });
   });
 
   describe('#seed()', function(){
@@ -47,52 +48,11 @@ describe('Genetic', function(){
     });
   });
 
-  describe('#findParents()', function(){
-    it("should find the parents with the lowest cost", function(){
-      genetic.seed(seedFn);
-      genetic.evaluate();
-
-      // give some of the population a lower cost than the rest
-      var shouldBeParents = [];
-      for(var i = 0; i < numParents; i++){
-        var p = genetic.population[i];
-        p.fitness = 1;
-        shouldBeParents.push(p);
-      }
-
-      // verify that findParents returns those with the lowest cost
-      var parents = genetic.findParents();
-      for(var j = 0; i < parents.length; j++){
-        assert.equal(shouldBeParents[j].dna.toString(), parents[j].dna.toString());
-      }
-    });
-  });
-
   describe('#crossoverParents()', function(){
-    it("should create a new population with only values from the parents", function(){
-      genetic.seed(seedFn);
-      genetic.evaluate();
-      // set parents
-      var shouldBeParents = [];
-      for(var i = 0; i < numParents; i++){
-        var p = genetic.population[i];
-        p.fitness = 1;
-        p.dna = [0,1];
-        shouldBeParents.push(p);
-      }
-
-      var parents = genetic.findParents();
-      var newPopulation = genetic.crossoverParents(parents);
-      // new population's dna after crossover should only consist of 1's and 0's
-      for(var j = 0;  j < newPopulation.length; j++){
-        assert.equal('0,1',newPopulation[j].dna.sort().toString());
-      }
-    });
-
     it("should should make a new population the same size as the previous one", function(){
       genetic.seed(seedFn);
       genetic.evaluate();
-      var parents = genetic.findParents();
+      var parents = genetic.selectionFn();
       var newPopulation = genetic.crossoverParents(parents);
       assert.equal(populationSize, newPopulation.length);
     });
