@@ -72,7 +72,7 @@ $(function() {
       mutationFn: mutationFn,
       populationSize: populationSize,
       mutationChance: mutationChance,
-      selectionFn: Genetic.prototype.selectionFns.elitist
+      selectionFn: Genetic.prototype.selectionFns.onePercent
     });
     setup();
     main();
