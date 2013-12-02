@@ -7,7 +7,7 @@ I learned a lot from reading this [http://natureofcode.com/book/chapter-9-the-ev
 
 ## Demos
 
-Evolving text [http://liamgriffiths.github.io/geneticjs/examples/helloworld/](http://liamgriffiths.github.io/geneticjs/examples/helloworld/
+Evolving text [http://liamgriffiths.github.io/geneticjs/examples/helloworld/](http://liamgriffiths.github.io/geneticjs/examples/helloworld/)
 
 *Coming soon* Evolving a path [http://liamgriffiths.github.io/geneticjs/examples/rockets/](http://liamgriffiths.github.io/geneticjs/examples/rockets/)
 
