@@ -1,162 +1,186 @@
-var RUNNING = false;
-var canvas, context;
-var geneticDemo, target, populationSize, mutationChance, numParents, timeStart;
-var cycles;
-var currentCycle = 0;
+window.requestAnimFrame = (function(){
+  return window.requestAnimationFrame       ||
+         window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame    ||
+         function( callback ){
+           window.setTimeout(callback, 1000 / 60);
+         };
+})();
 
-// modify 'Being' object to add some Rocket specific properties
-Being.prototype.position = {x: 0, y: 0}; // set starting position
-Being.prototype.velocity = 0.5; // set velocity
-Being.prototype.color = Math.floor(Math.random() * 155) + 100;
-Being.prototype.live = true;
-Being.prototype.finished = false;
-Being.prototype.age = 0;
-Being.prototype.size = 5;
-Being.prototype.update = function () {
-  if(this.live && this.finished === false){
+// set up the rocket
+function Rocket(settings) {
+  settings = settings || {};
+  this.position = settings.position || {x: 0, y: 0};
+  this.acceleration = settings.acceleration || {x: Math.random() * 0.1, y: Math.random() * 0.1};
+  this.velocity = settings.velocity || {x: 1, y: 1};
+  this.color = settings.color || Math.floor(Math.random() * 255);
+  this.live = true;
+  this.finished = false;
+  this.age = settings.age || 0;
+  this.size = settings.size || 10;
+}
+
+// rockets will be based on beings
+Rocket.prototype = new Being();
+
+Rocket.prototype.update = function (currentCycle, target, delta) {
+  if(this.live && !this.finished) {
     var direction = this.dna[currentCycle];
+    // update acceleration
+    if (this.velocity.x > 5) this.velocity.x = 1;
+    if (this.velocity.y > 5) this.velocity.y = 1;
+
+    // apply acceleration
+    this.velocity = {x: this.velocity.x + this.acceleration.x,
+                     y: this.velocity.y + this.acceleration.y};
+
     // apply direction vector
-    this.position = {x: this.position.x + direction.x * this.velocity,
-                     y: this.position.y + direction.y * this.velocity};
-    // apply velocity vector
-    // this.position = {x: this.position.x * this.velocity,
-    //                  y: this.position.y * this.velocity};
-
-
-    if(checkCollision(this, target)) this.finished = true;
+    var x = this.position.x + direction.x * this.velocity.x;
+    var y = this.position.y + direction.y * this.velocity.y;
+    this.position = {x: x, y: y};
   }
+
   this.age++;
 };
-Being.prototype.draw = function () {
-  context.fillStyle = "rgba(0, "+this.color+", 200, 0.5)";
-  context.fillRect(this.position.x, this.position.y, this.size, this.size);
+
+Rocket.prototype.draw = function (ctx) {
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(0, "+this.color+", 200, 0.5)";
+  ctx.arc(this.position.x, this.position.y, this.size, 0, 2 * Math.PI, false);
+  ctx.fill();
 };
 
-// dna is comprised on random {x, y} vectors to represent the direction
-var seedFn = function () {
-  var randomDNA = [];
-  for(var i = 0; i < cycles; i++){
-    var randX = Math.floor((Math.random() * 2) - 1);
-    var randY = Math.round((Math.random() * 2) - 1);
-    randomDNA.push({x: randX, y: randY});
-  }
-  return randomDNA;
-};
-
-var fitnessFn = function (rocket, target) {
-  var dist = Math.abs(target.x - rocket.position.x) + Math.abs(target.y - rocket.position.y);
-  return Math.sqrt(dist);
-};
-
-var mutationFn = function (dna) {
-  var dnaToMutate = Math.floor(Math.random() * dna.length);
-  dna[dnaToMutate] = {x: Math.round((Math.random() * 2) - 1),
-                      y: Math.round((Math.random() * 2) - 1)};
-  return dna;
-};
-
-function clearCanvas () {
-  canvas.width = canvas.width;
+// create the target
+function Target(settings) {
+  settings = settings || {};
+  this.position = settings.position || {x: 100, y: 100};
+  this.size = 10;
 }
 
-function checkCollision (a, b) {
-  // needs some work
-  var x = a.position.x;
-  var y = a.position.y;
+Target.prototype = {
+  update: function() {
+  },
 
-  if(x > b.x && x < b.x + b.size &&
-     y > b.y && y < b.y + b.size){
-       return true;
+  draw: function(ctx) {
+    ctx.beginPath();
+    ctx.fillStyle = "rgb(200, 0, 0)";
+    ctx.arc(this.position.x, this.position.y, this.size, 0, 2 * Math.PI, false);
+    ctx.fill();
   }
-  return false;
+};
+
+function linearTween(delta, current, target, duration, thresh) {
+  // idea nabbed from: http://jessefreeman.com/game-dev/intro-to-math-for-game-development/
+  var change = target - current;
+  thresh = thresh || 0.01;
+  if (Math.abs(change) < thresh) return target;
+  return change * delta / duration + current;
 }
 
-$(function() {
-  canvas = document.getElementById('output');
-  context = canvas.getContext('2d');
-  // set target and origin to random spots on map
-  target = {x: Math.floor(Math.random() * canvas.width),
-            y: Math.floor(Math.random() * canvas.height),
-            size: 10};
-  Being.prototype.position = {x: Math.floor(Math.random() * canvas.width),
-                              y: Math.floor(Math.random() * canvas.height)};
-  drawTarget();
+window.onload = function() {
+  var canvas = document.getElementById('output');
+  var ctx = canvas.getContext('2d');
+  canvas.width = document.documentElement.clientWidth;
+  canvas.height = document.documentElement.clientHeight;
+
+  var genetic;
+  var delta = 0; 
+  var lastFrameTime = new Date().getTime();
+  var cycles = 50;
+  var currentCycle = 0;
+  var deltaCount = 0;
+  var target = new Target({
+    position: {x: Math.random() * canvas.width, y: Math.random() * canvas.height}
+  });
+
+  function fitness(rocket, target) {
+    // fitness is the distance from the target
+    var dist = Math.abs(target.position.x - rocket.position.x) +
+               Math.abs(target.position.y - rocket.position.y);
+    return Math.sqrt(dist);
+  }
+
+  function mutate(dna) {
+    // randomly change one of the directions in the dna array
+    var dnaToMutate = Math.floor(Math.random() * dna.length);
+    dna[dnaToMutate] = {x: Math.random() * 2 - 1,
+                        y: Math.random() * 2 - 1};
+    return dna;
+  }
 
   function setup() {
-    geneticDemo.seed(seedFn);
+    genetic = new Genetic({
+      target: target,
+      fitnessFn: fitness,
+      mutationFn: mutate,
+      populationSize: 100,
+      mutationChance: 0.2,
+      selectionFn: Genetic.prototype.selectionFns.elitist,
+      candidate: Rocket
+    });
+
+    genetic.seed(function() {
+      // initialize dna with random directions
+      var dna = [];
+      for (var i = 0; i < cycles; i++) {
+        var randX = Math.random() * 2 - 1;
+        var randY = Math.random() * 2 - 1;
+        dna.push({x: randX, y: randY});
+      }
+      return dna;
+    });
+
+  }
+
+  function initRockets() {
+    var startPosition = {x: canvas.width / 2, y: canvas.height / 2};
+    for (var j = 0; j < genetic.population.length; j++) {
+      genetic.population[j].position = startPosition;
+    }
+  }
+
+  function update(delta) {
+    for (var i = 0; i < genetic.population.length; i++) {
+      genetic.population[i].update(currentCycle, target, delta);
+    }
+    target.update();
+    if (deltaCount > 100) {
+      currentCycle++;
+      deltaCount = 0;
+    } else {
+      deltaCount += delta;
+    }
   }
 
   function draw() {
-    clearCanvas();
-    for(var i = 0; i < populationSize; i++){
-      var rocket = geneticDemo.population[i];
-      if(rocket.live) rocket.draw();
+    ctx.clearRect(0, 0, $('#output').width(), $('#output').height());
+    for (var i = 0; i < genetic.population.length; i++) {
+      genetic.population[i].draw(ctx);
     }
-    drawTarget();
-
-    $('#progress').text("Generation:    " + geneticDemo.generation + "\n" +
-                        "Error rate:    " + (geneticDemo.avgError/100) + "\n" +
-                        "Running time:  " + (((new Date()).getTime() - timeStart) / 1000) + "\n" +
-                        "Current cycle: " + currentCycle);
-  }
-
-  function update() {
-    for(var i = 0; i < populationSize; i++){
-      var rocket = geneticDemo.population[i];
-      rocket.update();
-    }
-    currentCycle++;
+    target.draw(ctx);
   }
 
   function main() {
-    if(RUNNING){
-      if(currentCycle < cycles){
-        // loop through cycles in current generation
-        draw();
-        update();
-        window.requestAnimationFrame(main);
-      }else{
-        // evaluate and evolve to next generation, then run next set of cycles
-        currentCycle = 0;
-        geneticDemo.evaluate();
-        geneticDemo.evolve();
-        window.requestAnimationFrame(main);
-      }
+    var currentTime = new Date().getTime();
+    delta = currentTime - lastFrameTime;
+    lastFrameTime = currentTime;
+
+    if(currentCycle < cycles){
+      // loop through cycles in current generation
+      draw();
+      update(delta);
+    }else{
+      // evaluate and evolve to next generation, then run next set of cycles
+      currentCycle = 0;
+      genetic.evaluate();
+      genetic.evolve();
+      initRockets();
     }
+    window.requestAnimFrame(main);
   }
 
-  function drawTarget() {
-    context.fillStyle = "rgba(255, 0, 0, 0.8)";
-    context.fillRect(target.x, target.y, target.size, target.size);
-  }
-
-  // User interface
-  $('#startButton').on('click', function (e) {
-    var form = $('#controls').serializeArray();
-    for(var i = 0; i < form.length; i++){
-      if(form[i].name == 'target') target = form[i].value;
-      if(form[i].name == 'populationSize') populationSize = form[i].value;
-      if(form[i].name == 'mutationChance') mutationChance = form[i].value;
-      if(form[i].name == 'cycles') cycles = form[i].value;
-    }
-
-    RUNNING = true;
-    timeStart = (new Date().getTime());
-    cycles = cycles || 300;
-
-    geneticDemo = new Genetic({
-      target: target,
-      fitnessFn: fitnessFn,
-      mutationFn: mutationFn,
-      populationSize: populationSize,
-      mutationChance: mutationChance,
-      selectionFn: Genetic.prototype.selectionFns.elitist
-    });
-
-    setup();
-    main();
-  });
-
-  $('#stopButton').on('click', function (e) { RUNNING = false; });
-  $('#output').on('click', function (e) { });
-});
+  // start the simulation
+  setup();
+  initRockets();
+  main();
+};
